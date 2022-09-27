@@ -44,7 +44,7 @@ class PartOntology(object):
     def generate_ontology(self):
         """
 
-        :return:
+        :return:d
         """
         part_groups = self.all_parts_df.groupby("ChildPartNumber")[['ChildPart', "ChildPartName", "ParentPartNumber"]]
         for pg in part_groups:
