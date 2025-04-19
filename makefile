@@ -102,15 +102,17 @@ output/analysis/:
 output/tmp/:
 	mkdir -p $@
 
-output/tmp/stats.json: $(DEFAULT_BUILD_DIR)/merged-and-reasoned/comploinc-merged-reasoned.owl | output/tmp/
-	robot measure $(PREFIXES_METRICS) -i $< --format json --metrics extended --output $@
+# TODO temp
+output/tmp/stats.json:
+	robot measure $(PREFIXES_METRICS) -i $(DEFAULT_BUILD_DIR)/merged-and-reasoned/comploinc-merged-reasoned.owl --format json --metrics extended --output $@
 .PRECIOUS: output/tmp/stats.json
 
 documentation/stats-main.md: output/tmp/stats.json
 	jinjanate "$(SOURCE_METRICS_TEMPLATE)" $< > $@
 
-documentation/stats-dangling.md: curation/nlp-matches.sssom.tsv
-	python src/loinclib/nlp_taxonomification.py --stats-only
+# TODO temp
+documentation/stats-dangling.md:
+	echo 1
 
 documentation/stats.md: documentation/stats-main.md documentation/stats-dangling.md
 	cat documentation/stats-main.md documentation/stats-dangling.md > $@
@@ -175,3 +177,7 @@ $(CHEBI_OUT_MIREOT): $(CHEBI_OWL) $(CHEBI_MODULE)
 	--output $@
 
 alternative-hierarchies: chebi-subsets
+
+x:
+	robot query -i $(DEFAULT_BUILD_DIR)/merged-and-reasoned/comploinc-merged-reasoned.owl --query temp-ns.sparql temp-ns.tsv
+	#robot query -i $(DEFAULT_BUILD_DIR)/merged-and-reasoned/comploinc-merged-reasoned.owl --query temp-prefixes.sparql temp-prefixes.tsv

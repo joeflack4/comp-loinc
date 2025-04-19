@@ -1,0 +1,5 @@
+SELECT DISTINCT ?namespace
+WHERE {
+  ?s ?p ?o .
+  BIND(REPLACE(STR(?s), "^(.*[/#]).*$", "$1") AS ?namespace)
+}

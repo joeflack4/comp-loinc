@@ -1,0 +1,6 @@
+SELECT DISTINCT ?prefix
+WHERE {
+  ?s ?p ?o .
+  BIND(STRBEFORE(STR(?s), ":") AS ?prefix)
+  FILTER(REGEX(STR(?s), "^[^:]+:"))
+}
