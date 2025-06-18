@@ -161,6 +161,7 @@ I'd like to update the script analyze_equivalent_definitions.py. I'd like to mod
 should have a `label` column now. This should be for the rdfs:label for the class shown in the `property` column.
 """
 import argparse
+import os
 # noinspection PyPep8Naming
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -172,17 +173,25 @@ OWL = '{http://www.w3.org/2002/07/owl#}'
 RDF = '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}'
 RDFS = '{http://www.w3.org/2000/01/rdf-schema#}'
 THIS_FILE = Path(__file__)
-PROJ_DIR = THIS_FILE.parent.parent
+PROJ_DIR = THIS_FILE.parent.parent.parent.parent.parent
+# TODO: after refactor, get rid of these old vrs
 INPATH = PROJ_DIR / 'output/build-default/merged-and-reasoned/canonical/comploinc-merged-reasoned-all-supplementary.owl'
 OUTPATH = PROJ_DIR / 'equivalent_groups_defs.tsv'
 LABELS_OUTPATH = PROJ_DIR / 'equivalent_groups_labels.tsv'
 # INPATH = PROJ_DIR / 'output/build-default/merged-and-reasoned/comploinc-merged-reasoned-all-primary.owl'
 # OUTPATH = PROJ_DIR / 'equivalent_groups_defs_primary.tsv'
 # LABELS_OUTPATH = PROJ_DIR / 'equivalent_groups_labels_primary.tsv'
+INDIR_INFERRED_EXCLUDED = PROJ_DIR / 'output/build-default/merged-and-reasoned/'
+INDIR_INFERRED_INCLUDED = PROJ_DIR / 'output/build-default/merged-and-reasoned/inferred-sc-axioms-included/'
+OUTDIR = PROJ_DIR / 'output' / 'analysis' / 'equivalent_def_collisions'
+OUTPATH_DEFS_PATTERN = '{part_model}-{inferred_included_excluded}--labels.tsv'
+OUTPATH_LABELS_PATTERN = '{part_model}-{inferred_included_excluded}--defs.tsv'
+if not os.path.exists(OUTDIR):
+    os.mkdir(OUTDIR)
 
 
 def extract_pairs(intersection: ET.Element) -> List[Tuple[str, str]]:
-    """todo"""
+    """Extract key value pairs for definitions"""
     pairs = []
     for restriction in intersection.findall(f'{OWL}Restriction'):
         prop_elem = restriction.find(f'{OWL}onProperty')
@@ -200,7 +209,7 @@ def extract_pairs(intersection: ET.Element) -> List[Tuple[str, str]]:
 
 
 def _get(cls):
-    """todo"""
+    """Get class ID"""
     return cls.get(f'{RDF}about') or cls.get(f'{RDF}ID')
 
 
@@ -287,37 +296,20 @@ def generate_rows(groups: Dict[Tuple[Tuple[str, str], ...], List[str]], labels: 
 
 def main():
     """CLI entry point."""
+    for x in y:
+        groups, labels = parse_file(args.inpath)
+        rows, group_terms = generate_rows(groups, labels)
 
-    parser = argparse.ArgumentParser(
-        description='Group LOINC terms by equivalent class definitions.'
-    )
-    parser.add_argument(
-        '-i', '--inpath',
-        help='Path to comploinc-merged-reasoned-all-supplementary.owl',
-        default=INPATH,
-    )
-    parser.add_argument('-o', '--outpath', default=OUTPATH, help='Output TSV file')
-    parser.add_argument(
-        '-l', '--labels',
-        dest='labels_out',
-        default=LABELS_OUTPATH,
-        help='Output TSV file containing labels for each term',
-    )
-    args = parser.parse_args()
+        with open(args.outpath, 'w', encoding='utf-8') as f:
+            f.write('group_num\tproperty\tvalue\tlabel\tterms\n')
+            for g, p, v, lbl, t in rows:
+                f.write(f"{g}\t{p}\t{v}\t{lbl}\t{t}\n")
 
-    groups, labels = parse_file(args.inpath)
-    rows, group_terms = generate_rows(groups, labels)
-
-    with open(args.outpath, 'w', encoding='utf-8') as f:
-        f.write('group_num\tproperty\tvalue\tlabel\tterms\n')
-        for g, p, v, lbl, t in rows:
-            f.write(f"{g}\t{p}\t{v}\t{lbl}\t{t}\n")
-
-    with open(args.labels_out, 'w', encoding='utf-8') as f:
-        f.write('group_num\tterm\tlabel\n')
-        for g, terms in group_terms.items():
-            for term in terms:
-                f.write(f"{g}\t{term}\t{labels.get(term, '')}\n")
+        with open(args.labels_out, 'w', encoding='utf-8') as f:
+            f.write('group_num\tterm\tlabel\n')
+            for g, terms in group_terms.items():
+                for term in terms:
+                    f.write(f"{g}\t{term}\t{labels.get(term, '')}\n")
 
 
 if __name__ == '__main__':
